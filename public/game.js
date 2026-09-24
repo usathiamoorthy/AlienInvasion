@@ -9,8 +9,7 @@ const allowedPlayers = {
     'mackenzie': '1224',
     'lucian': '7867',
     'divya': '3278',
-    'jeya': '9182',
-
+    'jeya': '9182'
 };
 
 const weapons = [
