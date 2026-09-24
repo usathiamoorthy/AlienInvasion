@@ -1,12 +1,16 @@
 // Allowed Players
 const allowedPlayers = {
-    'tilly': '0607',
+    'tilly': '0706',
     'matilda': '0607',
     'broadie': '6767',
     'arthur': '9911',
     'remy': '3337',
     'patrick': '4163',
-    'mackenzie': '2412'
+    'mackenzie': '1224'
+    'lucian': '7867',
+    'divya': '3278',
+    'jeya': '9182',
+
 };
 
 const weapons = [
