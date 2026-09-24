@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alien Invasion</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-container">
+        <h1>Alien Invasion</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Name" required>
+            <input type="password" id="passcode" placeholder="Code" required>
+            
+            <h3>Select Avatar:</h3>
+            <div class="avatar-selection">
+                <label>
+                    <input type="radio" name="avatar" value="karate" checked>
+                    <div class="avatar-card">
+                        <span>Karate Girl</span>
+                        <div class="avatar-icon" style="background-color: #ffb6c1;">🥋</div>
+                    </div>
+                </label>
+                <label>
+                    <input type="radio" name="avatar" value="robin">
+                    <div class="avatar-card">
+                        <span>Robin (Batman)</span>
+                        <div class="avatar-icon" style="background-color: #ffeb3b;">🦇</div>
+                    </div>
+                </label>
+            </div>
+            
+            <button type="submit">Play Now!</button>
+        </form>
+        <p id="login-error" style="color: red; display: none;">Invalid Name or Code!</p>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div id="hud">
+            <div id="score">Points: 0</div>
+            <div id="weapon-display">Weapon: Bow & Arrow</div>
+            <div id="aliens-killed">Aliens Defeated: 0/100</div>
+            <div id="message-display">Get ready!</div>
+        </div>
+        
+        <!-- Controls for mobile -->
+        <div id="mobile-controls">
+            <div id="joystick-area"></div>
+            <button id="shoot-btn">SHOOT</button>
+        </div>
+
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <div id="game-over-modal" style="display: none;">
+        <h1 id="game-over-title">Game Over!</h1>
+        <p id="game-over-message"></p>
+        <button id="restart-btn">Play Again</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
