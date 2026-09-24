@@ -107,6 +107,18 @@ restartBtn.addEventListener('click', () => {
     startGame();
 });
 
+
+function quitGame() {
+    gameActive = false;
+    cancelAnimationFrame(animationId);
+    
+    gameContainer.style.display = 'none';
+    gameOverModal.style.display = 'none';
+    loginContainer.style.display = 'block';
+    
+    document.getElementById('passcode').value = '';
+}
+
 function startGame() {
     score = 0;
     credits = 0;
@@ -187,7 +199,11 @@ window.addEventListener('keydown', e => {
     let k = '';
     if (e.key) k = e.key.toLowerCase();
     
-    if (e.code === 'ArrowLeft' || e.code === 'KeyA' || k === 'a' || k === 'arrowleft') movingLeft = true;
+        if (e.code === 'Escape' || e.key === 'Escape') {
+        if (gameActive || gameOverModal.style.display === 'block') quitGame();
+    }
+
+if (e.code === 'ArrowLeft' || e.code === 'KeyA' || k === 'a' || k === 'arrowleft') movingLeft = true;
     if (e.code === 'ArrowRight' || e.code === 'KeyD' || k === 'd' || k === 'arrowright') movingRight = true;
     
     if (e.code === 'Space' || k === ' ' || k === 'spacebar') {
@@ -473,3 +489,25 @@ function gameLoop(timestamp) {
     animationId = requestAnimationFrame(gameLoop);
 }
 
+
+// Swipe to quit
+let swipeStartX = 0;
+let swipeStartY = 0;
+window.addEventListener('touchstart', e => {
+    swipeStartX = e.changedTouches[0].screenX;
+    swipeStartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+window.addEventListener('touchend', e => {
+    if (!gameActive && gameOverModal.style.display !== 'block') return;
+    const swipeEndX = e.changedTouches[0].screenX;
+    const swipeEndY = e.changedTouches[0].screenY;
+    
+    const dx = swipeEndX - swipeStartX;
+    const dy = swipeEndY - swipeStartY;
+    
+    // Right swipe (more than 100px horizontally, relatively straight)
+    if (dx > 100 && Math.abs(dy) < 60) {
+        quitGame();
+    }
+}, {passive: true});
