@@ -6,7 +6,7 @@ const allowedPlayers = {
     'arthur': '9911',
     'remy': '3337',
     'patrick': '4163',
-    'mackenzie': '1224'
+    'mackenzie': '1224',
     'lucian': '7867',
     'divya': '3278',
     'jeya': '9182',
