@@ -1,6 +1,7 @@
 // Allowed Players
 const allowedPlayers = {
     'tilly': '0607',
+    'matilda': '0607',
     'broadie': '6767',
     'arthur': '9911',
     'remy': '3337',
@@ -9,11 +10,11 @@ const allowedPlayers = {
 };
 
 const weapons = [
-    { name: 'Bow & Arrow', threshold: 0, color: 'white', size: 5, speed: 5 },
-    { name: 'Fire Bow & Arrow', threshold: 3, color: 'orange', size: 6, speed: 7 },
-    { name: 'Laser Sword', threshold: 8, color: 'cyan', size: 8, speed: 10 },
-    { name: 'Electric Trident', threshold: 13, color: 'yellow', size: 10, speed: 12 },
-    { name: 'Laser Gun', threshold: 25, color: '#f0f', size: 12, speed: 15 }
+    { name: 'Bow & Arrow', cost: 0, color: 'white', size: 5, speed: 5 },
+    { name: 'Fire Bow', cost: 3, color: 'orange', size: 6, speed: 7 },
+    { name: 'Laser Sword', cost: 8, color: 'cyan', size: 8, speed: 10 },
+    { name: 'Electric Trident', cost: 13, color: 'yellow', size: 10, speed: 12 },
+    { name: 'Laser Gun', cost: 25, color: '#f0f', size: 12, speed: 15 }
 ];
 
 const ENEMY_TYPES = [
@@ -31,11 +32,19 @@ const gameContainer = document.getElementById('game-container');
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
+const creditsEl = document.getElementById('credits-display');
 const weaponEl = document.getElementById('weapon-display');
 const aliensKilledEl = document.getElementById('aliens-killed');
 const msgEl = document.getElementById('message-display');
 const gameOverModal = document.getElementById('game-over-modal');
 const restartBtn = document.getElementById('restart-btn');
+const weaponBtns = [ null,
+    document.getElementById('btn-w1'),
+    document.getElementById('btn-w2'),
+    document.getElementById('btn-w3'),
+    document.getElementById('btn-w4')
+];
+const scoreListEl = document.getElementById('score-list');
 
 let animationId;
 let gameActive = false;
@@ -45,17 +54,21 @@ let player = {};
 let bullets = [];
 let enemies = [];
 let particles = [];
-let score = 0;
+let score = 0; // Total score for leaderboard
+let credits = 0; // Currency to spend on weapons
 let totalKilled = 0;
 let currentWeaponIdx = 0;
-let keys = {};
+let weaponTimer = 0; // Time remaining for active weapon (seconds)
+let lastTimestamp = 0;
+let currentPlayerName = '';
+
 const TOTAL_TO_WIN = 100;
 let avatarEmoji = '🥋';
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (player.y === 0) {
+    if (player.y === undefined || player.y === 0) {
         player.x = canvas.width / 2;
         player.y = canvas.height - 60;
     } else {
@@ -72,9 +85,13 @@ loginForm.addEventListener('submit', (e) => {
     const avatar = document.querySelector('input[name="avatar"]:checked').value;
 
     if (allowedPlayers[name] && allowedPlayers[name] === code) {
+        currentPlayerName = name;
         avatarEmoji = avatar === 'karate' ? '🥋' : '🦇';
         loginContainer.style.display = 'none';
         gameContainer.style.display = 'block';
+        if (document.activeElement) {
+            document.activeElement.blur();
+        }
         resizeCanvas();
         startGame();
     } else {
@@ -89,13 +106,15 @@ restartBtn.addEventListener('click', () => {
 
 function startGame() {
     score = 0;
+    credits = 0;
     totalKilled = 0;
     currentWeaponIdx = 0;
+    weaponTimer = 0;
     bullets = [];
     enemies = [];
     particles = [];
     gameActive = true;
-    keys = {};
+    lastTimestamp = performance.now();
     
     player = {
         x: canvas.width / 2,
@@ -104,28 +123,105 @@ function startGame() {
         speed: 5
     };
     
+    // Explicitly focus the canvas so ChromeOS keyboard events ALWAYS route here
+    canvas.focus();
+    
     updateHUD();
     msgEl.innerText = "Get ready!";
     setTimeout(() => msgEl.innerText = "", 2000);
     
     cancelAnimationFrame(animationId);
     spawnEnemies();
-    gameLoop();
+    animationId = requestAnimationFrame(gameLoop);
 }
 
 function updateHUD() {
-    scoreEl.innerText = `Points: ${score}`;
-    weaponEl.innerText = `Weapon: ${weapons[currentWeaponIdx].name}`;
-    aliensKilledEl.innerText = `Aliens Defeated: ${totalKilled}/${TOTAL_TO_WIN}`;
+    scoreEl.innerText = `Score: ${score}`;
+    creditsEl.innerText = `Credits: ${credits}`;
+    
+    let wText = `Weapon: ${weapons[currentWeaponIdx].name}`;
+    if (currentWeaponIdx > 0) wText += ` (${Math.ceil(weaponTimer)}s)`;
+    weaponEl.innerText = wText;
+    
+    aliensKilledEl.innerText = `Aliens: ${totalKilled}/${TOTAL_TO_WIN}`;
+    
+    // Update store buttons
+    for (let i = 1; i < weapons.length; i++) {
+        weaponBtns[i].disabled = (credits < weapons[i].cost);
+    }
 }
 
-// Input Handling
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup', e => {
-    keys[e.code] = false;
-    if (e.code === 'Space' && gameActive) {
-        shoot();
+function buyWeapon(idx) {
+    if (!gameActive || credits < weapons[idx].cost) return;
+    credits -= weapons[idx].cost;
+    currentWeaponIdx = idx;
+    weaponTimer = 15.0; // Lasts for 15 seconds
+    
+    msgEl.innerText = `Equipped ${weapons[idx].name}!`;
+    setTimeout(() => { if (msgEl.innerText.includes('Equipped')) msgEl.innerText = ""; }, 2000);
+    
+    updateHUD();
+    canvas.focus(); // Bring focus back to canvas after clicking a button
+}
+
+for (let i = 1; i <= 4; i++) {
+    weaponBtns[i].addEventListener('click', (e) => {
+        e.preventDefault();
+        buyWeapon(i);
+    });
+}
+
+// Action States
+let movingLeft = false;
+let movingRight = false;
+let isSpacePressed = false;
+
+window.addEventListener('keydown', e => {
+    if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code) || e.key === ' ') {
+        if (gameActive) e.preventDefault();
     }
+    
+    let k = '';
+    if (e.key) k = e.key.toLowerCase();
+    
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA' || k === 'a' || k === 'arrowleft') movingLeft = true;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD' || k === 'd' || k === 'arrowright') movingRight = true;
+    
+    if (e.code === 'Space' || k === ' ' || k === 'spacebar') {
+        if (!isSpacePressed && gameActive) {
+            isSpacePressed = true;
+            shoot();
+        }
+    }
+    
+    // Number keys for purchasing
+    if (gameActive && ['1','2','3','4'].includes(e.key)) {
+        buyWeapon(parseInt(e.key));
+    }
+});
+
+window.addEventListener('keyup', e => {
+    let k = '';
+    if (e.key) k = e.key.toLowerCase();
+
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA' || k === 'a' || k === 'arrowleft') movingLeft = false;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD' || k === 'd' || k === 'arrowright') movingRight = false;
+    
+    if (e.code === 'Space' || k === ' ' || k === 'spacebar') {
+        isSpacePressed = false;
+    }
+});
+
+// Mouse Controls
+canvas.addEventListener('mousemove', e => {
+    if (gameActive) {
+        const rect = canvas.getBoundingClientRect();
+        const targetX = e.clientX - rect.left;
+        player.x = targetX;
+    }
+});
+canvas.addEventListener('mousedown', e => {
+    if (gameActive) shoot();
 });
 
 // Mobile Controls
@@ -159,20 +255,6 @@ function shoot() {
         color: w.color,
         speed: w.speed
     });
-}
-
-function checkWeaponUpgrades() {
-    for (let i = weapons.length - 1; i >= 0; i--) {
-        if (score >= weapons[i].threshold && i > currentWeaponIdx) {
-            currentWeaponIdx = i;
-            msgEl.innerText = `Upgraded to ${weapons[i].name}!`;
-            setTimeout(() => {
-                if (msgEl.innerText.includes('Upgraded')) msgEl.innerText = "";
-            }, 2000);
-            updateHUD();
-            break;
-        }
-    }
 }
 
 function spawnEnemies() {
@@ -221,8 +303,31 @@ function createParticles(x, y, color) {
     }
 }
 
+function saveScore() {
+    let raw = localStorage.getItem('alienInvasionScores');
+    let scores = [];
+    if (raw) {
+        try { scores = JSON.parse(raw); } catch(e){}
+    }
+    scores.push({ name: currentPlayerName, score: score, icon: avatarEmoji });
+    scores.sort((a,b) => b.score - a.score);
+    // keep top 10
+    scores = scores.slice(0, 10);
+    localStorage.setItem('alienInvasionScores', JSON.stringify(scores));
+    
+    scoreListEl.innerHTML = '';
+    scores.forEach((s, idx) => {
+        let div = document.createElement('div');
+        div.className = 'score-entry';
+        div.innerHTML = `<span>${idx+1}. ${s.icon} ${s.name}</span> <span>${s.score}</span>`;
+        scoreListEl.appendChild(div);
+    });
+}
+
 function gameOver(won) {
     gameActive = false;
+    saveScore();
+    
     gameOverModal.style.display = 'block';
     if (won) {
         document.getElementById('game-over-title').innerText = "YOU WIN!";
@@ -235,15 +340,30 @@ function gameOver(won) {
     }
 }
 
-function gameLoop() {
+function gameLoop(timestamp) {
     if (!gameActive) return;
+    
+    let dt = (timestamp - lastTimestamp) / 1000; // delta time in seconds
+    lastTimestamp = timestamp;
+    
+    // Weapon Timer Logic
+    if (currentWeaponIdx > 0) {
+        weaponTimer -= dt;
+        if (weaponTimer <= 0) {
+            weaponTimer = 0;
+            currentWeaponIdx = 0; // Drop back to base weapon
+            msgEl.innerText = "Weapon depleted!";
+            setTimeout(() => { if (msgEl.innerText.includes('Weapon depleted')) msgEl.innerText = ""; }, 2000);
+        }
+        updateHUD(); // Update timer UI frequently
+    }
     
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // trail effect
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Player move
-    if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
-    if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
+    if (movingLeft) player.x -= player.speed;
+    if (movingRight) player.x += player.speed;
     
     if (touchX !== null) {
         player.x += touchX * player.speed;
@@ -313,8 +433,6 @@ function gameLoop() {
             return;
         }
         
-        // Out of bounds - lose points? Or lose game? 
-        // User says "the goal is to get as many points before the aliens get you". Let's say if they pass player, you lose.
         if (e.y > canvas.height + 50) {
             gameOver(false);
             return;
@@ -334,9 +452,9 @@ function gameLoop() {
                 if (e.hp <= 0) {
                     createParticles(e.x, e.y, '#fff');
                     score += e.points;
+                    credits += e.points;
                     totalKilled += 1;
                     enemies.splice(i, 1);
-                    checkWeaponUpgrades();
                     updateHUD();
                     
                     if (totalKilled >= TOTAL_TO_WIN) {

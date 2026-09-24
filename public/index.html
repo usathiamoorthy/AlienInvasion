@@ -3,62 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alien Invasion</title>
+    <title>Alien Invasion - Save the World!</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="login-container">
         <h1>Alien Invasion</h1>
         <form id="login-form">
-            <input type="text" id="username" placeholder="Name" required>
-            <input type="password" id="passcode" placeholder="Code" required>
+            <input type="text" id="username" placeholder="Player Name" required autocomplete="off">
+            <input type="password" id="passcode" placeholder="Secret Code" required>
             
-            <h3>Select Avatar:</h3>
             <div class="avatar-selection">
                 <label>
                     <input type="radio" name="avatar" value="karate" checked>
                     <div class="avatar-card">
-                        <span>Karate Girl</span>
-                        <div class="avatar-icon" style="background-color: #ffb6c1;">🥋</div>
+                        Karate Girl 🥋<br>
                     </div>
                 </label>
                 <label>
                     <input type="radio" name="avatar" value="robin">
                     <div class="avatar-card">
-                        <span>Robin (Batman)</span>
-                        <div class="avatar-icon" style="background-color: #ffeb3b;">🦇</div>
+                        Robin 🦇<br>
                     </div>
                 </label>
             </div>
             
+            <div class="instructions">
+                <p><strong>How to Play:</strong></p>
+                <ul>
+                    <li>Move: Left/Right Arrow Keys, A/D, or Mouse</li>
+                    <li>Shoot: Spacebar</li>
+                    <li><em>Mobile: Use on-screen joystick & shoot button</em></li>
+                </ul>
+            </div>
+            
             <button type="submit">Play Now!</button>
+            <p id="login-error" style="color: red; display: none;">Invalid Name or Code!</p>
         </form>
-        <p id="login-error" style="color: red; display: none;">Invalid Name or Code!</p>
     </div>
 
     <div id="game-container" style="display: none;">
         <div id="hud">
             <div id="score">Points: 0</div>
-            <div id="weapon-display">Weapon: Bow & Arrow</div>
+            <div id="credits-display">Credits: 0</div>
+            <div id="weapon-display">Weapon: Bow & Arrow (Base)</div>
             <div id="aliens-killed">Aliens Defeated: 0/100</div>
-            <div id="message-display">Get ready!</div>
         </div>
         
-        <!-- Controls for mobile -->
+        <div id="message-display"></div>
+        
+        <div id="weapon-store">
+            <p style="margin:0 0 5px 0;text-align:center;color:#0f0;font-size:12px;">UPGRADES (Last 15s)</p>
+            <button class="weapon-btn" id="btn-w1" disabled>1. Fire Bow (3 pts)</button>
+            <button class="weapon-btn" id="btn-w2" disabled>2. Laser Sword (8 pts)</button>
+            <button class="weapon-btn" id="btn-w3" disabled>3. Trident (13 pts)</button>
+            <button class="weapon-btn" id="btn-w4" disabled>4. Laser Gun (25 pts)</button>
+        </div>
+
+        <canvas id="game-canvas" tabindex="0"></canvas>
         <div id="mobile-controls">
             <div id="joystick-area"></div>
             <button id="shoot-btn">SHOOT</button>
         </div>
-
-        <canvas id="game-canvas"></canvas>
     </div>
 
     <div id="game-over-modal" style="display: none;">
-        <h1 id="game-over-title">Game Over!</h1>
-        <p id="game-over-message"></p>
+        <h1 id="game-over-title"></h1>
+        <p id="game-over-message" style="font-size: 20px;"></p>
+        
+        <div id="scoreboard">
+            <h3 style="margin-top:0; color:#fff;">High Scores</h3>
+            <div id="score-list"></div>
+        </div>
+
         <button id="restart-btn">Play Again</button>
     </div>
 
-    <script src="game.js"></script>
+    <script src="game.js?v=4"></script>
 </body>
 </html>
