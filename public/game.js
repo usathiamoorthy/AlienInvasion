@@ -89,7 +89,7 @@ loginForm.addEventListener('submit', (e) => {
 
     if (allowedPlayers[name] && allowedPlayers[name] === code) {
         currentPlayerName = name;
-        avatarEmoji = avatar === 'karate' ? '🥋' : '🦇';
+        avatarEmoji = avatar === 'karate' ? '🥋' : '🥷';
         loginContainer.style.display = 'none';
         gameContainer.style.display = 'block';
         if (document.activeElement) {
