@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "alieninvasion-95c7d",
     "public": "public",
     "ignore": [
       "firebase.json",
