@@ -1,12 +1,12 @@
 // Allowed Players
 const allowedPlayers = {
-    'tilly': '0706',
-    'matilda': '0607',
+    'tilly': '0067',
+    'matilda': '5657',
     'broadie': '6767',
     'arthur': '9911',
     'remy': '3337',
     'patrick': '4163',
-    'mackenzie': '1224',
+    'mackenzie': '1671',
     'lucian': '7867',
     'divya': '3278',
     'jeya': '9182'
