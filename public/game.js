@@ -2,7 +2,7 @@
 const allowedPlayers = {
     'tilly': '0067',
     'matilda': '5657',
-    'broadie': '6767',
+    'brodie': '6767',
     'arthur': '9911',
     'remy': '3337',
     'patrick': '4163',
